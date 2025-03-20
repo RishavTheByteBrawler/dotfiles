@@ -131,12 +131,17 @@ return {
 						pylsp = {
 							plugins = {
 								black = { enabled = true },
-								pylint = { enabled = true, executable = "pylint" },
+								pylint = {
+									enabled = true,
+									executable = "pylint",
+									args = { "--disable=C0114,C0115,C0116" }, -- Ignore docstring warnings
+								},
 								pycodestyle = {
-									ignore = { "W391" },
+									ignore = { "W391", "D100", "D101", "D102", "D103", "D104", "D105", "D107" }, -- Ignore docstring-related warnings
 									maxLineLength = 100,
 								},
 							},
+							skip_token_initialization = true, -- Disable progress reporting to avoid timeout errors
 						},
 					},
 				})
@@ -184,15 +189,15 @@ return {
 					filetypes = { "c", "cpp", "objc", "objcpp" },
 				})
 			end,
-      ['rust-analyzer'] = function ()
-        lspconfig['rust-analyzer'].setup({
-          settings = {
-            diagnostics = {
-              enabled = true,
-            }
-          }
-        })
-      end,
+			-- ['rust-analyzer'] = function ()
+			--   lspconfig['rust-analyzer'].setup({
+			--     settings = {
+			--       diagnostics = {
+			--         enabled = true,
+			--       }
+			--     }
+			--   })
+			-- end,
 			["lua_ls"] = function()
 				-- configure lua server (with special settings)
 				lspconfig["lua_ls"].setup({
