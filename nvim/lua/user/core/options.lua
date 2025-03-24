@@ -42,6 +42,7 @@ opt.swapfile = false
 opt.scrolloff = 8
 vim.opt.colorcolumn = "80"
 vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#2e2e2e" })
+
 vim.api.nvim_create_autocmd("TextYankPost", {
 	desc = "Highlight when yanking (copying) text",
 	group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
