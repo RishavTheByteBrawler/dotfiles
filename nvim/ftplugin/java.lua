@@ -16,7 +16,7 @@ local config = {
 		"-Declipse.product=org.eclipse.jdt.ls.core.product",
 		"-Dlog.protocol=true",
 		"-Dlog.level=ALL",
-    "-Xms1g",
+		"-Xms1g",
 		"-Xmx2g",
 		"--add-modules=ALL-SYSTEM",
 		"--add-opens",
@@ -37,9 +37,9 @@ local config = {
 		java = {
 			signatureHelp = { enabled = true },
 			extendedClientCapabilities = extendedClientCapabilities,
-      eclipse = {
-        downloadSources = true,
-      },
+			eclipse = {
+				downloadSources = true,
+			},
 			maven = {
 				downloadSources = true,
 			},
