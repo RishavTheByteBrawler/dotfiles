@@ -40,8 +40,19 @@ opt.splitbelow = true -- split horizontal window to the bottom
 -- turn off swapfile
 opt.swapfile = false
 opt.scrolloff = 8
-vim.opt.colorcolumn = "80"
-vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#2e2e2e" })
+vim.opt.colorcolumn = "100"
+local function set_custom_highlights()
+    vim.api.nvim_set_hl(0, "ColorColumn", { ctermbg = 0, bg = "#2e2e2e" })
+end
+
+-- Create an autocommand that triggers on the ColorScheme event
+vim.api.nvim_create_autocmd("ColorScheme", {
+    pattern = "*",
+    callback = set_custom_highlights,
+})
+
+-- Apply the custom highlights immediately in case the colorscheme is already set
+set_custom_highlights()
 
 vim.api.nvim_create_autocmd("TextYankPost", {
 	desc = "Highlight when yanking (copying) text",
@@ -54,8 +65,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 vim.api.nvim_create_autocmd("TermOpen", {
 	group = vim.api.nvim_create_augroup("custom-term-open", { clear = true }),
 	callback = function()
-		vim.opt.number = false
-		vim.opt.relativenumber = false
+		vim.opt.relativenumber = true
 	end,
 })
 

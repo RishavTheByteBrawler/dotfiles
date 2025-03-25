@@ -54,9 +54,60 @@ local config = {
 					enabled = "all", -- literals, all, none
 				},
 			},
-			format = {
-				enabled = false,
+			contentProvider = {
+				preferred = "fernflower",
 			},
+			saveActions = {
+				organizeImports = true,
+			},
+			completion = {
+				-- When using an unimported static method, how should the LSP rank possible places to import the static method from
+				favoriteStaticMembers = {
+					"org.hamcrest.MatcherAssert.assertThat",
+					"org.hamcrest.Matchers.*",
+					"org.hamcrest.CoreMatchers.*",
+					"org.junit.jupiter.api.Assertions.*",
+					"java.util.Objects.requireNonNull",
+					"java.util.Objects.requireNonNullElse",
+					"org.mockito.Mockito.*",
+          "java.util.*",
+				},
+				importOrder = {
+					"java",
+					"jakarta",
+					"javax",
+					"com",
+					"org",
+				},
+			},
+			sources = {
+				-- How many classes from a specific package should be imported before automatic imports combine them all into a single import
+				organizeImports = {
+					starThreshold = 9999,
+					staticThreshold = 9999,
+				},
+			},
+			-- How should different pieces of code be generated?
+			codeGeneration = {
+				-- When generating toString use a json format
+				toString = {
+					template = "${object.className}{${member.name()}=${member.value}, ${otherMembers}}",
+				},
+				-- When generating hashCode and equals methods use the java 7 objects method
+				hashCodeEquals = {
+					useJava7Objects = true,
+				},
+				-- When generating code use code blocks
+				useBlocks = true,
+			},
+			-- If changes to the project will require the developer to update the projects configuration advise the developer before accepting the change
+			configuration = {
+				updateBuildConfiguration = "interactive",
+			},
+			-- enable code lens in the lsp
+		},
+		format = {
+			enabled = false,
 		},
 	},
 
