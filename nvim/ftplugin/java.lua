@@ -2,6 +2,13 @@ local home = os.getenv("HOME")
 local workspace_path = home .. "/.local/share/nvim/jdtls-workspace/"
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
 local workspace_dir = workspace_path .. project_name
+local function arginp()
+	return coroutine.create(function(dap_run_co)
+		vim.ui.input({ prompt = "Args: " }, function(argstr)
+			coroutine.resume(dap_run_co, argstr)
+		end)
+	end)
+end
 
 local status, jdtls = pcall(require, "jdtls")
 if not status then
@@ -54,15 +61,13 @@ local config = {
 					enabled = "all", -- literals, all, none
 				},
 			},
-			contentProvider = {
-				preferred = "fernflower",
-			},
 			saveActions = {
 				organizeImports = true,
 			},
 			completion = {
 				-- When using an unimported static method, how should the LSP rank possible places to import the static method from
 				favoriteStaticMembers = {
+					"java.util.*",
 					"org.hamcrest.MatcherAssert.assertThat",
 					"org.hamcrest.Matchers.*",
 					"org.hamcrest.CoreMatchers.*",
@@ -70,7 +75,6 @@ local config = {
 					"java.util.Objects.requireNonNull",
 					"java.util.Objects.requireNonNullElse",
 					"org.mockito.Mockito.*",
-          "java.util.*",
 				},
 				importOrder = {
 					"java",
@@ -79,12 +83,29 @@ local config = {
 					"com",
 					"org",
 				},
+				filteredTypes = {
+					"com.sun.*",
+					"io.micrometer.shaded.*",
+					"java.awt.*",
+					"jdk.*",
+					"sun.*",
+				},
 			},
 			sources = {
 				-- How many classes from a specific package should be imported before automatic imports combine them all into a single import
 				organizeImports = {
 					starThreshold = 9999,
 					staticThreshold = 9999,
+				},
+			},
+			compile = {
+				nullAnalysis = {
+					nonnull = {
+						"lombok.NonNull",
+						"javax.annotation.Nonnull",
+						"org.eclipse.jdt.annotation.NonNull",
+						"org.springframework.lang.NonNull",
+					},
 				},
 			},
 			-- How should different pieces of code be generated?
@@ -110,19 +131,31 @@ local config = {
 			enabled = false,
 		},
 	},
-
+	on_attach = function(client, bufnr)
+		jdtls.setup_dap({ hotcodereplace = "auto" })
+		require("jdtls.dap").setup_dap_main_class_configs({
+			config_overrides = {
+				args = arginp,
+				stepFilters = {
+					skipClasses = { "java.lang.ClassLoader" },
+				},
+			},
+		})
+	end,
 	init_options = {
 		bundles = {
-			vim.fn.glob(vim.fn.stdpath("data") .. "/mason/packages/java-test/extension/server/*.jar", true),
+      vim.fn.glob( home .. "/.local/share/nvim/mason/packages/jdtls/lombok.jar"),
+			vim.fn.glob(vim.fn.stdpath("data") .. "/mason/packages/java-test/extension/server/*.jar"),
 			vim.fn.glob(
 				vim.fn.stdpath("data")
-					.. "/mason/packages/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar",
-				true
+					.. "/mason/packages/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar"
 			),
 		},
 	},
 }
 require("jdtls").start_or_attach(config)
+
+-- keymaps and init_options
 vim.keymap.set("n", "<leader>co", "<Cmd>lua require'jdtls'.organize_imports()<CR>", { desc = "Organize Imports" })
 vim.keymap.set("n", "<leader>crv", "<Cmd>lua require('jdtls').extract_variable()<CR>", { desc = "Extract Variable" })
 vim.keymap.set(
@@ -144,3 +177,12 @@ vim.keymap.set(
 	"<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>",
 	{ desc = "Extract Method" }
 )
+
+vim.lsp.codelens.refresh()
+
+vim.api.nvim_create_autocmd("BufWritePost", {
+	pattern = { "*.java" },
+	callback = function()
+		local _, _ = pcall(vim.lsp.codelens.refresh)
+	end,
+})

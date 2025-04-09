@@ -1,3 +1,8 @@
+local home = os.getenv("HOME")
+local workspace_path = home .. "/.local/share/nvim/jdtls-workspace/"
+local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+local workspace_dir = workspace_path .. project_name
+
 return {
 	"neovim/nvim-lspconfig",
 	event = { "BufReadPre", "BufNewFile" },
@@ -54,10 +59,14 @@ return {
 				keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts) -- show diagnostics for line
 
 				opts.desc = "Go to previous diagnostic"
-				keymap.set("n", "[d", vim.diagnostic.goto_prev, opts) -- jump to previous diagnostic in buffer
+				keymap.set("n", "[d", function()
+					vim.diagnostic.jump({ count = -1, float = true })
+				end, opts)
 
 				opts.desc = "Go to next diagnostic"
-				keymap.set("n", "]d", vim.diagnostic.goto_next, opts) -- jump to next diagnostic in buffer
+				keymap.set("n", "]d", function()
+					vim.diagnostic.jump({ count = 1, float = true })
+				end, opts)
 
 				opts.desc = "Show documentation for what is under cursor"
 				keymap.set("n", "K", vim.lsp.buf.hover, opts) -- show documentation for what is under cursor
@@ -76,11 +85,19 @@ return {
 		}
 		-- Change the Diagnostic symbols in the sign column (gutter)
 		-- (not in youtube nvim video)
-		local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-		for type, icon in pairs(signs) do
-			local hl = "DiagnosticSign" .. type
-			vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-		end
+		vim.diagnostic.config({
+			signs = {
+				text = {
+					[vim.diagnostic.severity.ERROR] = "",
+					[vim.diagnostic.severity.WARN] = "",
+					[vim.diagnostic.severity.INFO] = "",
+					[vim.diagnostic.severity.HINT] = "󰠠",
+				},
+			},
+			virtual_text = true,
+			underline = true,
+			update_in_insert = false,
+		})
 
 		mason_lspconfig.setup_handlers({
 			-- default handler for installed servers
@@ -189,15 +206,83 @@ return {
 					filetypes = { "c", "cpp", "objc", "objcpp" },
 				})
 			end,
-			-- ['rust-analyzer'] = function ()
-			--   lspconfig['rust-analyzer'].setup({
-			--     settings = {
-			--       diagnostics = {
-			--         enabled = true,
-			--       }
-			--     }
-			--   })
-			-- end,
+			["jdtls"] = function()
+				lspconfig["jdtls"].setup({
+					cmd = {
+						"java",
+						"-Declipse.application=org.eclipse.jdt.ls.core.id1",
+						"-Dosgi.bundles.defaultStartLevel=4",
+						"-Declipse.product=org.eclipse.jdt.ls.core.product",
+						"-Dlog.protocol=true",
+						"-Dlog.level=ALL",
+						"-Xms1g",
+						"-Xmx2g",
+						"--add-modules=ALL-SYSTEM",
+						"--add-opens",
+						"java.base/java.util=ALL-UNNAMED",
+						"--add-opens",
+						"java.base/java.lang=ALL-UNNAMED",
+						"-javaagent:" .. home .. "/.local/share/nvim/mason/packages/jdtls/lombok.jar",
+						"-jar",
+						vim.fn.glob(
+							home .. "/.local/share/nvim/mason/packages/jdtls/plugins/org.eclipse.equinox.launcher_*.jar"
+						),
+						"-configuration",
+						home .. "/.local/share/nvim/mason/packages/jdtls/config_mac_arm",
+						"-data",
+						workspace_dir,
+					},
+					settings = {
+						java = {
+							completion = {
+								favoriteStaticMembers = {
+									"java.util.*",
+									"org.hamcrest.MatcherAssert.assertThat",
+									"org.hamcrest.Matchers.*",
+									"org.hamcrest.CoreMatchers.*",
+									"org.junit.jupiter.api.Assertions.*",
+									"java.util.Objects.requireNonNull",
+									"java.util.Objects.requireNonNullElse",
+									"org.mockito.Mockito.*",
+								},
+								importOrder = {
+									"java",
+									"jakarta",
+									"javax",
+									"com",
+									"org",
+								},
+								filteredTypes = {
+									"com.sun.*",
+									"io.micrometer.shaded.*",
+									"java.awt.*",
+									"jdk.*",
+									"sun.*",
+								},
+							},
+							sources = {
+								organizeImports = {
+									starThreshold = 9999,
+									staticThreshold = 9999,
+								},
+							},
+							compile = {
+								nullAnalysis = {
+									nonnull = {
+										"lombok.NonNull",
+										"javax.annotation.Nonnull",
+										"org.eclipse.jdt.annotation.NonNull",
+										"org.springframework.lang.NonNull",
+									},
+								},
+							},
+						},
+						format = {
+							enabled = false,
+						},
+					},
+				})
+			end,
 			["lua_ls"] = function()
 				-- configure lua server (with special settings)
 				lspconfig["lua_ls"].setup({
