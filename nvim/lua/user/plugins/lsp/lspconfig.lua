@@ -283,6 +283,24 @@ return {
 					},
 				})
 			end,
+			["rust-analyzer"] = function()
+				lspconfig["rust-analyzer"].setup({
+					capabilities = capabilities,
+					cmd = {
+						vim.fn.glob("~/.local/share/nvim/mason/bin/rust-analyzer", true),
+					},
+					filetypes = { "rust" },
+					root_dir = require("lspconfig.util").root_pattern("cargo.toml", "rust-project.json"),
+					settings = {
+						["rust-analyzer"] = {
+							checkOnSave = {
+								command = "clippy",
+								extraArgs = { "--no-deps" },
+							},
+						},
+					},
+				})
+			end,
 			["lua_ls"] = function()
 				-- configure lua server (with special settings)
 				lspconfig["lua_ls"].setup({
