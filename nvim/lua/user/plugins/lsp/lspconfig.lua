@@ -283,19 +283,18 @@ return {
 					},
 				})
 			end,
-			["rust-analyzer"] = function()
-				lspconfig["rust-analyzer"].setup({
+			["rust_analyzer"] = function()
+				lspconfig["rust_analyzer"].setup({
 					capabilities = capabilities,
-					cmd = {
-						vim.fn.glob("~/.local/share/nvim/mason/bin/rust-analyzer", true),
-					},
-					filetypes = { "rust" },
-					root_dir = require("lspconfig.util").root_pattern("cargo.toml", "rust-project.json"),
+					on_attach = function(client, bufnr)
+						if client.server_capabilities.inlayHintProvider then
+							vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+						end
+					end,
 					settings = {
 						["rust-analyzer"] = {
 							checkOnSave = {
 								command = "clippy",
-								extraArgs = { "--no-deps" },
 							},
 						},
 					},

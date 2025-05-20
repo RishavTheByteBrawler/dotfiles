@@ -76,3 +76,21 @@ vim.keymap.set("n", "<C-t>", function()
 	vim.cmd.wincmd("J")
 	vim.api.nvim_win_set_height(0, 12)
 end)
+
+-- Apply immediately on startup
+vim.api.nvim_set_hl(0, "LspInlayHint", {
+  fg = "#888888",
+  bg = "NONE",
+  italic = true,
+})
+
+-- Re-apply on colorscheme change
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    vim.api.nvim_set_hl(0, "LspInlayHint", {
+      fg = "#888888",
+      bg = "NONE",
+      italic = true,
+    })
+  end,
+})
