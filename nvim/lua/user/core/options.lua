@@ -33,6 +33,14 @@ opt.backspace = "indent,eol,start" -- allow backspace on indent, end of line or 
 -- clipboard
 opt.clipboard:append("unnamedplus") -- use system clipboard as default register
 
+-- undodir
+local undodir = vim.fn.glob("~/.local/share/nvim/undodir/", true)
+opt.undofile = true
+opt.undodir = undodir
+
+if not vim.fn.isdirectory(undodir) then
+	vim.fn.mkdir(undodir, "p", 0700)
+end
 -- split windows
 opt.splitright = true -- split vertical window to the right
 opt.splitbelow = true -- split horizontal window to the bottom
@@ -79,18 +87,18 @@ end)
 
 -- Apply immediately on startup
 vim.api.nvim_set_hl(0, "LspInlayHint", {
-  fg = "#888888",
-  bg = "NONE",
-  italic = true,
+	fg = "#888888",
+	bg = "NONE",
+	italic = true,
 })
 
 -- Re-apply on colorscheme change
 vim.api.nvim_create_autocmd("ColorScheme", {
-  callback = function()
-    vim.api.nvim_set_hl(0, "LspInlayHint", {
-      fg = "#888888",
-      bg = "NONE",
-      italic = true,
-    })
-  end,
+	callback = function()
+		vim.api.nvim_set_hl(0, "LspInlayHint", {
+			fg = "#888888",
+			bg = "NONE",
+			italic = true,
+		})
+	end,
 })

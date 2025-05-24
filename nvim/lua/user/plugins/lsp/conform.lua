@@ -29,7 +29,7 @@ return {
 				scss = { "prettier" },
 				sh = { "shfmt" },
 				go = { "gofmt" },
-				python = { "black" },
+				-- python = { "black" },
 				xml = { "xmlformatter" },
 			},
 		})
