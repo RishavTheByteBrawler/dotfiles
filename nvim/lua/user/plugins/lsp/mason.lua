@@ -38,8 +38,8 @@ return {
 				"pylsp",
 				"ts_ls",
 				"clangd",
-        "jdtls",
-        "zls",
+				"jdtls",
+				"zls",
 			},
 		})
 
@@ -48,7 +48,6 @@ return {
 				"prettier", -- prettier formatter
 				"stylua", -- lua formatter
 				"isort", -- python formatter
-				-- "black", -- python formatter
 				"pylint",
 				"eslint_d",
 				"google-java-format",
@@ -64,7 +63,7 @@ return {
 				"java-debug-adapter",
 				"java-test",
 				"cmakelint",
-        "rust-analyzer",
+				"rust-analyzer",
 			},
 		})
 	end,

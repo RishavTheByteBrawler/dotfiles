@@ -102,9 +102,11 @@ return {
 		mason_lspconfig.setup_handlers({
 			-- default handler for installed servers
 			function(server_name)
-				lspconfig[server_name].setup({
-					capabilities = capabilities,
-				})
+				if server_name ~= "jdtls" then
+					lspconfig[server_name].setup({
+						capabilities = capabilities,
+					})
+				end
 			end,
 			["svelte"] = function()
 				-- configure svelte server
@@ -204,83 +206,6 @@ return {
 						"--completion-style=detailed",
 					},
 					filetypes = { "c", "cpp", "objc", "objcpp" },
-				})
-			end,
-			["jdtls"] = function()
-				lspconfig["jdtls"].setup({
-					cmd = {
-						"java",
-						"-Declipse.application=org.eclipse.jdt.ls.core.id1",
-						"-Dosgi.bundles.defaultStartLevel=4",
-						"-Declipse.product=org.eclipse.jdt.ls.core.product",
-						"-Dlog.protocol=true",
-						"-Dlog.level=ALL",
-						"-Xms1g",
-						"-Xmx2g",
-						"--add-modules=ALL-SYSTEM",
-						"--add-opens",
-						"java.base/java.util=ALL-UNNAMED",
-						"--add-opens",
-						"java.base/java.lang=ALL-UNNAMED",
-						"-javaagent:" .. home .. "/.local/share/nvim/mason/packages/jdtls/lombok.jar",
-						"-jar",
-						vim.fn.glob(
-							home .. "/.local/share/nvim/mason/packages/jdtls/plugins/org.eclipse.equinox.launcher_*.jar"
-						),
-						"-configuration",
-						home .. "/.local/share/nvim/mason/packages/jdtls/config_mac_arm",
-						"-data",
-						workspace_dir,
-					},
-					settings = {
-						java = {
-							completion = {
-								favoriteStaticMembers = {
-									"java.util.*",
-									"org.hamcrest.MatcherAssert.assertThat",
-									"org.hamcrest.Matchers.*",
-									"org.hamcrest.CoreMatchers.*",
-									"org.junit.jupiter.api.Assertions.*",
-									"java.util.Objects.requireNonNull",
-									"java.util.Objects.requireNonNullElse",
-									"org.mockito.Mockito.*",
-								},
-								importOrder = {
-									"java",
-									"jakarta",
-									"javax",
-									"com",
-									"org",
-								},
-								filteredTypes = {
-									"com.sun.*",
-									"io.micrometer.shaded.*",
-									"java.awt.*",
-									"jdk.*",
-									"sun.*",
-								},
-							},
-							sources = {
-								organizeImports = {
-									starThreshold = 9999,
-									staticThreshold = 9999,
-								},
-							},
-							compile = {
-								nullAnalysis = {
-									nonnull = {
-										"lombok.NonNull",
-										"javax.annotation.Nonnull",
-										"org.eclipse.jdt.annotation.NonNull",
-										"org.springframework.lang.NonNull",
-									},
-								},
-							},
-						},
-						format = {
-							enabled = false,
-						},
-					},
 				})
 			end,
 			["rust_analyzer"] = function()
