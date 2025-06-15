@@ -49,6 +49,7 @@ local config = {
 			},
 			maven = {
 				downloadSources = true,
+        downloadJavadoc = true,
 			},
 			referencesCodeLens = {
 				enabled = true,

@@ -6,8 +6,9 @@ return {
 		"windwp/nvim-ts-autotag",
 		{
 			"nvim-treesitter/nvim-treesitter-context",
-			opts = { enable = true, mode = "topline", line_numbers = true,  multiwindow = true },
+			opts = { enable = true, mode = "topline", line_numbers = true, multiwindow = true },
 		},
+		"nvim-treesitter/nvim-treesitter-textobjects",
 	},
 	config = function()
 		-- import nvim-treesitter plugin
@@ -56,7 +57,31 @@ return {
 					init_selection = "<C-space>",
 					node_incremental = "<C-space>",
 					scope_incremental = false,
-					node_decremental = "<bs>",
+					node_decremental = "<BS>",
+				},
+			},
+			textobjects = { -- Add textobjects configuration
+				select = {
+					enable = true,
+					lookahead = true, -- Automatically jump to the next matching node
+					keymaps = {
+						["af"] = "@function.outer", -- Select around function
+						["if"] = "@function.inner", -- Select inside function
+						["ac"] = "@class.outer", -- Select around class
+						["ic"] = "@class.inner", -- Select inside class
+					},
+				},
+				move = { -- Optional: Navigate to next/previous class/function
+					enable = true,
+					set_jumps = true,
+					goto_next_start = {
+						["]m"] = "@function.outer",
+						["]c"] = "@class.outer",
+					},
+					goto_previous_start = {
+						["[m"] = "@function.outer",
+						["[c"] = "@class.outer",
+					},
 				},
 			},
 		})
