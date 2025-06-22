@@ -97,6 +97,12 @@ return {
 			virtual_text = true,
 			underline = true,
 			update_in_insert = false,
+      float = {
+        border = "rounded",
+        focusable = false,
+        source = true,
+        scope = "line",
+      },
 		})
 
 		mason_lspconfig.setup_handlers({
