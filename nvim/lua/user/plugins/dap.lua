@@ -1,153 +1,160 @@
 return {
-	"mfussenegger/nvim-dap",
-	dependencies = {
-		"rcarriga/nvim-dap-ui",
-		"nvim-neotest/nvim-nio",
-		"theHamsta/nvim-dap-virtual-text",
-	},
-	config = function()
-		local dap = require("dap")
-		local dapui = require("dapui")
+  "mfussenegger/nvim-dap",
+  dependencies = {
+    "rcarriga/nvim-dap-ui",
+    "nvim-neotest/nvim-nio",
+    "theHamsta/nvim-dap-virtual-text",
+  },
+  config = function()
+    local dap = require("dap")
+    local dapui = require("dapui")
 
-		require("dapui").setup()
-		-- nvim-dap-virtual-text setup
-		require("nvim-dap-virtual-text").setup({
-			enabled = true, -- enable this plugin (the default)
-			enabled_commands = true, -- create commands DapVirtualTextEnable, DapVirtualTextDisable, DapVirtualTextToggle, (DapVirtualTextForceRefresh for refreshing when debug adapter did not notify its termination)
-			highlight_changed_variables = true, -- highlight changed values with NvimDapVirtualTextChanged, else always NvimDapVirtualText
-			highlight_new_as_changed = false, -- highlight new variables in the same way as changed variables (if highlight_changed_variables)
-			show_stop_reason = true, -- show stop reason when stopped for exceptions
-			commented = false, -- prefix virtual text with comment string
-			only_first_definition = true, -- only show virtual text at first definition (if there are multiple)
-			all_references = false, -- show virtual text on all all references of the variable (not only definitions)
-			clear_on_continue = false, -- clear virtual text on "continue" (might cause flickering when stepping)
-			display_callback = function(variable, buf, stackframe, node, options)
-				-- by default, strip out new line characters
-				if options.virt_text_pos == "inline" then
-					return " -> " .. variable.value:gsub("%s+", " ")
-				else
-					return variable.name .. " = " .. variable.value:gsub("%s+", " ")
-				end
-			end,
-			-- position of virtual text, see `:h nvim_buf_set_extmark()`, default tries to inline the virtual text. Use 'eol' to set to end of line
-			virt_text_pos = vim.fn.has("nvim-0.10") == 1 and "inline" or "eol",
+    -- Define custom breakpoint icons
+    vim.fn.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticError", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapStopped", { text = "→", texthl = "DiagnosticInfo", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapBreakpointRejected", { text = "✗", texthl = "DiagnosticWarn", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapBreakpointCondition", { text = "◆", texthl = "DiagnosticHint", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapLogPoint", { text = "📝", texthl = "DiagnosticHint", linehl = "", numhl = "" })
 
-			-- experimental features:
-			all_frames = false, -- show virtual text for all stack frames not only current. Only works for debugpy on my machine.
-			virt_lines = false, -- show virtual lines instead of virtual text (will flicker!)
-			virt_text_win_col = nil, -- position the virtual text at a fixed window column (starting from the first text column) ,
-			-- e.g. 80 to position at column 80, see `:h nvim_buf_set_extmark()`
-		})
+    -- DAP UI setup
+    require("dapui").setup({
+      layouts = {
+        {
+          elements = { "scopes", "breakpoints", "stacks", "watches" },
+          size = 40,
+          position = "left",
+        },
+        {
+          elements = { "repl", "console" },
+          size = 0.25,
+          position = "bottom",
+        },
+      },
+    })
 
-		--code specific setup
+    -- nvim-dap-virtual-text setup
+    require("nvim-dap-virtual-text").setup({
+      enabled = true,
+      enabled_commands = true,
+      highlight_changed_variables = true,
+      highlight_new_as_changed = false,
+      show_stop_reason = true,
+      commented = false,
+      only_first_definition = true,
+      all_references = false,
+      clear_on_continue = false,
+      display_callback = function(variable, buf, stackframe, node, options)
+        if options.virt_text_pos == "inline" then
+          return " -> " .. variable.value:gsub("%s+", " ")
+        else
+          return variable.name .. " = " .. variable.value:gsub("%s+", " ")
+        end
+      end,
+      virt_text_pos = vim.fn.has("nvim-0.10") == 1 and "inline" or "eol",
+      all_frames = false,
+      virt_lines = false,
+      virt_text_win_col = nil,
+    })
 
-		--python setup
-		dap.adapters.python = function(cb, config)
-			if config.request == "attach" then
-				---@diagnostic disable-next-line: undefined-field
-				local port = (config.connect or config).port
-				---@diagnostic disable-next-line: undefined-field
-				local host = (config.connect or config).host or "127.0.0.1"
-				cb({
-					type = "server",
-					port = assert(port, "`connect.port` is required for a python `attach` configuration"),
-					host = host,
-					options = {
-						source_filetype = "python",
-					},
-				})
-			else
-				cb({
-					type = "executable",
-					command = vim.fn.expand("~/.virtualenvs/debugpy/bin/python"),
-					args = { "-m", "debugpy.adapter" },
-					options = {
-						source_filetype = "python",
-					},
-				})
-			end
-		end
+    -- Python setup
+    dap.adapters.python = function(cb, config)
+      if config.request == "attach" then
+        local port = (config.connect or config).port
+        local host = (config.connect or config).host or "127.0.0.1"
+        cb({
+          type = "server",
+          port = assert(port, "`connect.port` is required for a python `attach` configuration"),
+          host = host,
+          options = {
+            source_filetype = "python",
+          },
+        })
+      else
+        cb({
+          type = "executable",
+          command = vim.fn.expand("~/.virtualenvs/debugpy/bin/python"),
+          args = { "-m", "debugpy.adapter" },
+          options = {
+            source_filetype = "python",
+          },
+        })
+      end
+    end
 
-		dap.configurations.python = {
-			{
-				-- The first three options are required by nvim-dap
-				type = "python", -- the type here established the link to the adapter definition: `dap.adapters.python`
-				request = "launch",
-				name = "Launch file",
+    dap.configurations.python = {
+      {
+        type = "python",
+        request = "launch",
+        name = "Launch file",
+        program = "${file}",
+        pythonPath = function()
+          local cwd = vim.fn.getcwd()
+          if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
+            return cwd .. "/venv/bin/python"
+          elseif vim.fn.executable(cwd .. "/.venv/bin/python") == 1 then
+            return cwd .. "/.venv/bin/python"
+          else
+            return "/usr/bin/python3"
+          end
+        end,
+      },
+    }
 
-				-- Options below are for debugpy, see https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for supported options
+    -- UI listeners
+    dap.listeners.before.attach.dapui_config = function()
+      dapui.open()
+    end
+    dap.listeners.before.launch.dapui_config = function()
+      dapui.open()
+    end
+    dap.listeners.before.event_terminated.dapui_config = function()
+      dapui.close()
+    end
+    dap.listeners.before.event_exited.dapui_config = function()
+      dapui.close()
+    end
 
-				program = "${file}", -- This configuration will launch the current file if used.
-				pythonPath = function()
-					-- debugpy supports launching an application with a different interpreter then the one used to launch debugpy itself.
-					-- The code below looks for a `venv` or `.venv` folder in the current directly and uses the python within.
-					-- You could adapt this - to for example use the `VIRTUAL_ENV` environment variable.
-					local cwd = vim.fn.getcwd()
-					if vim.fn.executable(cwd .. "/venv/bin/python") == 1 then
-						return cwd .. "/venv/bin/python"
-					elseif vim.fn.executable(cwd .. "/.venv/bin/python") == 1 then
-						return cwd .. "/.venv/bin/python"
-					else
-						return "/usr/bin/python3"
-					end
-				end,
-			},
-		}
-		-- ui setup
-		dap.listeners.before.attach.dapui_config = function()
-			dapui.open()
-		end
-		dap.listeners.before.launch.dapui_config = function()
-			dapui.open()
-		end
-		dap.listeners.before.event_terminated.dapui_config = function()
-			dapui.close()
-		end
-		dap.listeners.before.event_exited.dapui_config = function()
-			dapui.close()
-		end
-
-		-- keybindings
-		vim.keymap.set("n", "<leader>dc", function()
-			require("dap").continue()
-		end)
-		vim.keymap.set("n", "<leader>do", function()
-			require("dap").step_over()
-		end)
-		vim.keymap.set("n", "<leader>di", function()
-			require("dap").step_into()
-		end)
-		vim.keymap.set("n", "<leader>dt", function()
-			require("dap").step_out()
-		end)
-		vim.keymap.set("n", "<Leader>b", function()
-			require("dap").toggle_breakpoint()
-		end)
-		vim.keymap.set("n", "<Leader>B", function()
-			require("dap").set_breakpoint()
-		end)
-		vim.keymap.set("n", "<Leader>lp", function()
-			require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
-		end)
-		vim.keymap.set("n", "<Leader>dr", function()
-			require("dap").repl.open()
-		end)
-		vim.keymap.set("n", "<Leader>dl", function()
-			require("dap").run_last()
-		end)
-		vim.keymap.set({ "n", "v" }, "<Leader>dh", function()
-			require("dap.ui.widgets").hover()
-		end)
-		vim.keymap.set({ "n", "v" }, "<Leader>dp", function()
-			require("dap.ui.widgets").preview()
-		end)
-		vim.keymap.set("n", "<Leader>df", function()
-			local widgets = require("dap.ui.widgets")
-			widgets.centered_float(widgets.frames)
-		end)
-		vim.keymap.set("n", "<Leader>ds", function()
-			local widgets = require("dap.ui.widgets")
-			widgets.centered_float(widgets.scopes)
-		end)
-	end,
+    -- Keybindings
+    vim.keymap.set("n", "<leader>dc", function()
+      require("dap").continue()
+    end, { desc = "Continue Debugging" })
+    vim.keymap.set("n", "<leader>do", function()
+      require("dap").step_over()
+    end, { desc = "Step Over" })
+    vim.keymap.set("n", "<leader>di", function()
+      require("dap").step_into()
+    end, { desc = "Step Into" })
+    vim.keymap.set("n", "<leader>dt", function()
+      require("dapui").toggle()
+    end, { desc = "Toggle DAP UI" }) -- Fixed
+    vim.keymap.set("n", "<Leader>b", function()
+      require("dap").toggle_breakpoint()
+    end, { desc = "Toggle Breakpoint" })
+    vim.keymap.set("n", "<Leader>B", function()
+      require("dap").set_breakpoint()
+    end, { desc = "Set Breakpoint" })
+    vim.keymap.set("n", "<Leader>lp", function()
+      require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: "))
+    end, { desc = "Set Log Point" })
+    vim.keymap.set("n", "<Leader>dr", function()
+      require("dap").repl.open()
+    end, { desc = "Open REPL" })
+    vim.keymap.set("n", "<Leader>dl", function()
+      require("dap").run_last()
+    end, { desc = "Run Last" })
+    vim.keymap.set({ "n", "v" }, "<Leader>dh", function()
+      require("dap.ui.widgets").hover()
+    end, { desc = "Hover Widget" })
+    vim.keymap.set({ "n", "v" }, "<Leader>dp", function()
+      require("dap.ui.widgets").preview()
+    end, { desc = "Preview Widget" })
+    vim.keymap.set("n", "<Leader>df", function()
+      local widgets = require("dap.ui.widgets")
+      widgets.centered_float(widgets.frames)
+    end, { desc = "Show Frames" })
+    vim.keymap.set("n", "<Leader>ds", function()
+      local widgets = require("dap.ui.widgets")
+      widgets.centered_float(widgets.scopes)
+    end, { desc = "Show Scopes" })
+  end,
 }
