@@ -19,7 +19,6 @@ return {
 		local mason_lspconfig = require("mason-lspconfig")
 
 		-- import cmp-nvim-lsp plugin
-
 		local keymap = vim.keymap -- for conciseness
 		-- Create the workspace directory by concatenating the designated workspace path and the project name
 
@@ -64,7 +63,7 @@ return {
 				end, opts)
 
 				opts.desc = "Go to next diagnostic"
-				keymap.set("n", "]d", function()
+			 keymap.set("n", "]d", function()
 					vim.diagnostic.jump({ count = 1, float = true })
 				end, opts)
 
@@ -97,12 +96,12 @@ return {
 			virtual_text = true,
 			underline = true,
 			update_in_insert = false,
-      float = {
-        border = "rounded",
-        focusable = false,
-        source = true,
-        scope = "line",
-      },
+			float = {
+				border = "rounded",
+				focusable = false,
+				source = true,
+				scope = "line",
+			},
 		})
 
 		mason_lspconfig.setup_handlers({
@@ -132,19 +131,55 @@ return {
 			["ts_ls"] = function()
 				lspconfig["ts_ls"].setup({
 					capabilities = capabilities,
+					on_attach = function(client, bufnr)
+						-- Enable inlay hints for better React development
+						if client.server_capabilities.inlayHintProvider then
+							vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+						end
+					end,
 					filetypes = {
-						"typescript",
-						"typescriptreact",
-						"typescript.tsx",
 						"javascript",
 						"javascriptreact",
 						"javascript.jsx",
+						"typescript",
+						"typescriptreact",
+						"typescript.tsx",
 					},
 					root_dir = lspconfig.util.root_pattern("package.json", "tsconfig.json", "jsconfig.json", ".git"),
-					init_options = {
-						preferences = {
-							importModuleSpecifierPreference = "relative",
-							jsxAttributeCompletionStyle = "auto",
+					settings = {
+						typescript = {
+							inlayHints = {
+								includeInlayParameterNameHints = "all",
+								includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+								includeInlayFunctionParameterTypeHints = true,
+								includeInlayVariableTypeHints = true,
+								includeInlayPropertyDeclarationTypeHints = true,
+								includeInlayFunctionLikeReturnTypeHints = true,
+								includeInlayEnumMemberValueHints = true,
+							},
+							preferences = {
+								importModuleSpecifierPreference = "relative",
+								jsxAttributeCompletionStyle = "auto",
+								allowIncompleteCompletions = true,
+								autoImportFileExcludePatterns = { "node_modules" },
+							},
+						},
+						javascript = {
+							inlayHints = {
+								includeInlayParameterNameHints = "all",
+								includeInlayParameterNameHintsWhenArgumentMatchesName = true,
+								includeInlayFunctionParameterTypeHints = true,
+								includeInlayVariableTypeHints = true,
+								includeInlayPropertyDeclarationTypeHints = true,
+								includeInlayFunctionLikeReturnTypeHints = true,
+								includeInlayEnumMemberValueHints = true,
+							},
+							preferences = {
+								importModuleSpecifierPreference = "relative",
+								jsxAttributeCompletionStyle = "auto",
+								allowIncompleteCompletions = true,
+								autoImportFileExcludePatterns = { "node_modules" },
+							},
 						},
 					},
 				})
